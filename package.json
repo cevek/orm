@@ -1,12 +1,13 @@
 {
-  "name": "corm",
+  "name": "tsorm",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
   "keywords": [],
-  "author": "",
+  "author": "cevek",
   "license": "ISC",
   "dependencies": {
-    "dits": "^1.0.0"
+    "dits": "^1.0.1",
+    "mysql2": "^1.0.0-rc.11"
   }
 }

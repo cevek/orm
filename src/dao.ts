@@ -26,6 +26,19 @@ interface SelectParamsWithInclude extends Select {
     include?: Include[];
 }
 
+const runQueue: (()=>void)[] = [];
+
+export function initDAO() {
+    for (let i = 0; i < runQueue.length; i++) {
+        runQueue[i]();
+    }
+    //clear
+    for (let i = 0; i < runQueue.length; i++) {
+        runQueue.pop();
+    }
+}
+process.nextTick(initDAO);
+
 export class DAO<T extends BaseType> {
     private __table: Table;
 
@@ -251,7 +264,8 @@ export class Relation {
     foreignKeyFn: () => DAOField;
 
     constructor(type: RelationType, what: ()=>typeof DAO, whereDAO: typeof DAO, property: string, through?: ()=>typeof DAO) {
-        setImmediate(() => {
+        // console.log('push Rel', whereDAO.name, what, property);
+        runQueue.push(() => {
             if (!whereDAO.relationKeys) {
                 whereDAO.relationKeys = new Map();
             }
@@ -261,6 +275,7 @@ export class Relation {
             this.type = type;
 
             whereDAO.relationKeys.set(whatDAO, property);
+            // console.log('Set Rel', whereDAO.name, whatDAO.name, property);
 
             if (type == RelationType.BELONGS_TO) {
                 const selfKeyName = whereDAO.foreignKeys.get(whatDAO);
@@ -278,11 +293,14 @@ export class Relation {
                 this.foreignKeyFn = () => inject(whatDAO)[foreignKeyName];
             }
             if (through) {
-                const keyName = whatDAO.relationKeys.get(destDAO);
-                if (!keyName) {
-                    throw new Error(`Doesn't exists relationKey ${destDAO.name} in ${whatDAO.name}`);
-                }
-                this.throughFn = () => inject(whatDAO)[keyName];
+                runQueue.push(() => {
+                    // console.log('find Rel', whatDAO.name, destDAO.name);
+                    const keyName = whatDAO.relationKeys.get(destDAO);
+                    if (!keyName) {
+                        throw new Error(`Doesn't exists relationKey ${destDAO.name} in ${whatDAO.name}`);
+                    }
+                    this.throughFn = () => inject(whatDAO)[keyName];
+                })
             }
             this.property = property;
         })
@@ -317,10 +335,12 @@ export function foreignKey(foreignModel: () => typeof DAO) {
     // return field;
     return function (target: any, property: string) {
         const My = (target.constructor as typeof DAO);
-        setImmediate(() => {
+        runQueue.unshift(() => {
             if (!My.foreignKeys) {
                 My.foreignKeys = new Map();
             }
+            // console.log('FK', foreignModel().name, property);
+
             My.foreignKeys.set(foreignModel(), property);
         })
         return field(target, property);
