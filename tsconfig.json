@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "noImplicitAny": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "skipDefaultLibCheck": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "sourceMap": true
+  }
+}
