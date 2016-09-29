@@ -93,8 +93,15 @@ export class DAO<T extends BaseType> {
         return result.affectedRows;
     }
 
-    async createBulk(items: T[], trx?: Transaction) {
-        return this.insertCustom({objects: items}, trx);
+    async createBulk(items: T[], trx?: Transaction, maxRows = 100) {
+        let insertId: number | null = null;
+        for (let i = 0; i < items.length; i += maxRows) {
+            const rows = items.slice(i, i + maxRows);
+            if (rows.length) {
+                insertId = await this.insertCustom({objects: rows}, trx);
+            }
+        }
+        return insertId;
     }
 
 
@@ -286,6 +293,9 @@ export class Relation {
                 this.foreignKeyFn = () => inject(whatDAO).id as DAOField;
             } else {
                 this.selfKeyFn = () => inject(whereDAO).id as DAOField;
+                if (!whatDAO.foreignKeys) {
+                    throw new Error(`Doesn't exists foreignKey ${whereDAO.name} in ${whatDAO.name}`);
+                }
                 const foreignKeyName = whatDAO.foreignKeys.get(whereDAO);
                 if (!foreignKeyName) {
                     throw new Error(`Doesn't exists foreignKey ${whereDAO.name} in ${whatDAO.name}`);
@@ -321,7 +331,7 @@ export function field(target: any, property: string) {
 }
 
 function rel(type: RelationType, what: ()=>typeof DAO, through?: ()=>typeof DAO) {
-    return (target: any, property: string)=> {
+    return (target: any, property: string) => {
         const rel = new Relation(type, what, target.constructor, property, through);
         Object.defineProperty(target, property, {
             get: () => rel,

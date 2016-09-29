@@ -254,7 +254,7 @@ export class Expression extends Base {
     }
 
     as(identifier: Identifier): Expression {
-        return new LeftRightExpression(ExpressionTypes.AS, this, identifier);
+        return new LeftRightExpression(ExpressionTypes.AS, this, identifier as any);
     }
 
     characterSet(expr: Expression) {

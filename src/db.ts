@@ -6,7 +6,7 @@ import {inject, bindInjection} from 'dits';
 
 export class DB {
     // protected logger = new Logger(this.constructor.name);
-    protected connection = inject(Connection);
+    connection = inject(Connection);
 
     async query<T>(query:string, values?:any, trx?:Transaction):Promise<T> {
 
